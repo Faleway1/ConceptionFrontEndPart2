@@ -1,0 +1,36 @@
+{
+  "projects": [
+    {
+      "id": "1",
+      "title": "Dashboard analytics",
+      "description": "Tableau de bord temps réel avec filtres, charts et support du thème sombre.",
+      "details": "Refonte complète d'un tableau de bord avec micro-interactions, optimisation des performances et thème sombre.",
+      "type": "Application web",
+      "tech": ["Vue.js", "Charts", "Dark mode"]
+    },
+    {
+      "id": "2",
+      "title": "Site vitrine agence",
+      "description": "Landing page responsive, optimisée pour le SEO et la conversion.",
+      "details": "Landing page responsive, optimisée pour le SEO et la conversion.",
+      "type": "Site vitrine",
+      "tech": ["SEO", "Performance", "A/B Testing"]
+    },
+    {
+      "id": "3",
+      "title": "Outil interne RH",
+      "description": "Module de gestion des candidatures avec recherche plein texte et exports.",
+      "details": "Module de gestion des candidatures avec recherche plein texte et exports.",
+      "type": "Projet d'école",
+      "tech": ["Accessibilité", "Formulaires", "API"]
+    },
+    {
+      "id": "4",
+      "title": "PWA événementielle",
+      "description": "Application mobile-first pour gérer l'inscription et l'agenda d'un événement.",
+      "details": "Application mobile-first pour gérer l'inscription et l'agenda d'un événement.",
+      "type": "Application web",
+      "tech": ["PWA", "Notifications", "Offline"]
+    }
+  ]
+}
