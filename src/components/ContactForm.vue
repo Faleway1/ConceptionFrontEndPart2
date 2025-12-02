@@ -19,6 +19,7 @@
       Envoyer
     </button>
     <p v-if="submitted" class="text-sm text-cyan-600 dark:text-cyan-300">Message envoyé (simulation)</p>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Le formulaire est non fonctionnel pour cette version. Données non envoyées.</p>
   </form>
 </template>
 

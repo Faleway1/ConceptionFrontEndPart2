@@ -1,40 +1,36 @@
 {
   "projects": [
     {
-      "id": 1,
-      "title": "Dashboard analytics SaaS",
-      "description": "Refonte d'un tableau de bord marketing avec flux temps réel.",
-      "details": "Mise en place d'une SPA Vue avec websockets pour des KPIs temps réel, theming sombre/clair, et optimisation des performances (Lighthouse 95).",
+      "id": "1",
+      "title": "Dashboard analytics",
+      "description": "Tableau de bord temps réel avec filtres, charts et support du thème sombre.",
+      "details": "Refonte complète d'un tableau de bord avec micro-interactions, optimisation des performances et thème sombre.",
       "type": "Application web",
-      "image": "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80",
-      "tech": ["Vue", "Tailwind", "Websocket"]
+      "tech": ["Vue.js", "Charts", "Dark mode"]
     },
     {
-      "id": 2,
-      "title": "Landing page produit B2B",
-      "description": "Optimisation du taux de conversion pour une solution SaaS.",
-      "details": "Création d'un funnel marketing avec tracking analytique, tests A/B et optimisation des performances Core Web Vitals.",
-      "type": "Landing page",
-      "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=1200&q=80",
-      "tech": ["Vue", "Tailwind", "SEO"]
-    },
-    {
-      "id": 3,
-      "title": "Application mobile first",
-      "description": "Interface responsive pour une application de réservation.",
-      "details": "Gestion de formulaires multi-étapes, validation côté client et sauvegarde locale pour reprise de parcours.",
-      "type": "Projet d'école",
-      "image": "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80",
-      "tech": ["Vue", "Tailwind", "UX"]
-    },
-    {
-      "id": 4,
-      "title": "Site vitrine artisan",
-      "description": "Présentation d'un artisan local avec blog statique.",
-      "details": "Site SEO friendly avec optimisation des images, plan de marquage et formulaire de contact simulé.",
+      "id": "2",
+      "title": "Site vitrine agence",
+      "description": "Landing page responsive, optimisée pour le SEO et la conversion.",
+      "details": "Landing page responsive, optimisée pour le SEO et la conversion.",
       "type": "Site vitrine",
-      "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80",
-      "tech": ["Vue", "Tailwind", "Accessibilité"]
+      "tech": ["SEO", "Performance", "A/B Testing"]
+    },
+    {
+      "id": "3",
+      "title": "Outil interne RH",
+      "description": "Module de gestion des candidatures avec recherche plein texte et exports.",
+      "details": "Module de gestion des candidatures avec recherche plein texte et exports.",
+      "type": "Projet d'école",
+      "tech": ["Accessibilité", "Formulaires", "API"]
+    },
+    {
+      "id": "4",
+      "title": "PWA événementielle",
+      "description": "Application mobile-first pour gérer l'inscription et l'agenda d'un événement.",
+      "details": "Application mobile-first pour gérer l'inscription et l'agenda d'un événement.",
+      "type": "Application web",
+      "tech": ["PWA", "Notifications", "Offline"]
     }
   ]
 }
