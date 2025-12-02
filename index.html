@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Développeur - Vue & Tailwind</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            soft: '0 10px 40px rgba(0,0,0,0.08)'
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .fade-section { opacity: 0; transform: translateY(12px); transition: all .6s ease; }
+    .fade-section.is-visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+  <div id="app" class="min-h-screen"></div>
+
+  <script type="module">
+    import { createApp, reactive, computed, onMounted, watch, ref, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+    import { createRouter, createWebHashHistory, RouterLink, RouterView, useRoute, useRouter } from 'https://unpkg.com/vue-router@4/dist/vue-router.esm-browser.js';
+
+    const createProjectStore = () => {
+      const state = reactive({
+        projects: [],
+        loading: false,
+        error: null,
+      });
+
+      const loadProjects = async () => {
+        state.loading = true;
+        state.error = null;
+        try {
+          const response = await fetch('projects.json');
+          if (!response.ok) throw new Error('Impossible de charger les projets');
+          const data = await response.json();
+          state.projects = data.projects;
+        } catch (error) {
+          state.error = error.message;
+        } finally {
+          state.loading = false;
+        }
+      };
+
+      const addProject = (project) => {
+        const id = Math.max(0, ...state.projects.map((p) => p.id)) + 1;
+        state.projects.unshift({ ...project, id });
+      };
+
+      return { state, loadProjects, addProject };
+    };
+
+    const useTheme = () => {
+      const theme = ref('light');
+      const setTheme = (value) => {
+        theme.value = value;
+        document.documentElement.classList.toggle('dark', value === 'dark');
+        localStorage.setItem('theme', value);
+      };
+
+      onMounted(() => {
+        const stored = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(stored || (systemPrefersDark ? 'dark' : 'light'));
+      });
+
+      return { theme, setTheme };
+    };
+
+    const HeaderNav = {
+      name: 'HeaderNav',
+      props: ['onNavigate', 'theme', 'setTheme'],
+      setup(props) {
+        const router = useRouter();
+        const open = ref(false);
+        const navigateSection = async (id) => {
+          open.value = false;
+          if (router.currentRoute.value.path !== '/') {
+            await router.push('/');
+            await nextTick();
+          }
+          props.onNavigate(id);
+        };
+
+        return { open, navigateSection, router };
+      },
+      template: `
+        <header class="sticky top-0 z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/70 dark:border-slate-800/70">
+          <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 lg:py-4">
+            <div class="flex items-center gap-2 font-semibold">
+              <span class="h-10 w-10 rounded-2xl bg-indigo-500 text-white grid place-items-center shadow-soft">J</span>
+              <div>
+                <p class="text-sm text-slate-500 dark:text-slate-300">Portfolio</p>
+                <p class="text-lg">Développeur Frontend</p>
+              </div>
+            </div>
+            <div class="hidden lg:flex items-center gap-8 text-sm font-medium">
+              <RouterLink to="/" class="hover:text-indigo-500">Accueil</RouterLink>
+              <button class="hover:text-indigo-500" @click="navigateSection('skills')">Compétences</button>
+              <button class="hover:text-indigo-500" @click="navigateSection('services')">Services</button>
+              <RouterLink to="/projects" class="hover:text-indigo-500">Projets</RouterLink>
+              <button class="hover:text-indigo-500" @click="navigateSection('contact')">Contact</button>
+              <button @click="setTheme(theme === 'dark' ? 'light' : 'dark')" class="flex items-center gap-2 rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-2">
+                <span v-if="theme === 'dark'">🌙</span><span v-else>☀️</span>
+                <span class="text-xs">{{ theme === 'dark' ? 'Sombre' : 'Clair' }}</span>
+              </button>
+            </div>
+            <button class="lg:hidden rounded-lg border border-slate-200 dark:border-slate-700 p-2" @click="open = !open" aria-label="Ouvrir le menu">
+              <span class="block h-0.5 w-6 bg-slate-900 dark:bg-slate-100 mb-1"></span>
+              <span class="block h-0.5 w-6 bg-slate-900 dark:bg-slate-100 mb-1"></span>
+              <span class="block h-0.5 w-6 bg-slate-900 dark:bg-slate-100"></span>
+            </button>
+          </nav>
+          <div v-if="open" class="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+            <div class="mx-auto max-w-6xl px-4 py-4 space-y-3 text-sm">
+              <RouterLink to="/" class="block" @click="open=false">Accueil</RouterLink>
+              <button class="block" @click="navigateSection('skills')">Compétences</button>
+              <button class="block" @click="navigateSection('services')">Services</button>
+              <RouterLink to="/projects" class="block" @click="open=false">Projets</RouterLink>
+              <button class="block" @click="navigateSection('contact')">Contact</button>
+              <button @click="setTheme(theme === 'dark' ? 'light' : 'dark')" class="flex items-center gap-2 rounded-full bg-slate-200/70 dark:bg-slate-800 px-3 py-2">
+                <span v-if="theme === 'dark'">🌙</span><span v-else>☀️</span>
+                <span class="text-xs">{{ theme === 'dark' ? 'Sombre' : 'Clair' }}</span>
+              </button>
+            </div>
+          </div>
+        </header>
+      `,
+    };
+
+    const HeroSection = {
+      name: 'HeroSection',
+      template: `
+        <section class="fade-section relative overflow-hidden" id="hero">
+          <div class="mx-auto max-w-6xl px-4 py-16 lg:py-24 grid items-center gap-12 lg:grid-cols-[1.2fr_1fr]">
+            <div class="space-y-6">
+              <div class="inline-flex items-center gap-2 rounded-full bg-indigo-100/80 px-4 py-2 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+                <span class="text-xl">👋</span><span>Bonjour, moi c'est Jordan — Développeur Frontend</span>
+              </div>
+              <h1 class="text-4xl font-bold leading-tight sm:text-5xl">Je conçois des interfaces web modernes, accessibles et performantes.</h1>
+              <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl">Je transforme les idées en expériences utilisateur élégantes grâce à Vue.js, Tailwind CSS et de solides pratiques d'accessibilité.</p>
+              <div class="flex flex-wrap gap-4">
+                <RouterLink to="/projects" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 text-white shadow-soft transition hover:translate-y-0.5 hover:shadow-none">Voir mes projets <span aria-hidden="true">↗</span></RouterLink>
+                <a href="#contact" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold dark:border-slate-700">Me contacter</a>
+              </div>
+              <div class="flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
+                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-slate-800">Disponibilité : Alternance</span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-slate-800">Basé à Lyon • Remote friendly</span>
+              </div>
+            </div>
+            <div class="relative">
+              <div class="absolute inset-0 rounded-[32px] bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-orange-400/20 blur-3xl"></div>
+              <div class="relative rounded-[32px] bg-white/80 p-8 shadow-soft ring-1 ring-slate-100 dark:bg-slate-800/60 dark:ring-slate-700">
+                <div class="flex items-center justify-between text-sm text-slate-500 dark:text-slate-300">
+                  <span>Stats clés</span>
+                  <span class="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">2025</span>
+                </div>
+                <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                    <p class="text-3xl font-bold">+15</p>
+                    <p class="text-sm text-slate-500">Projets livrés</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                    <p class="text-3xl font-bold">4 ans</p>
+                    <p class="text-sm text-slate-500">d'expérience</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                    <p class="text-3xl font-bold">100%</p>
+                    <p class="text-sm text-slate-500">Orientation utilisateur</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                    <p class="text-3xl font-bold">SEO</p>
+                    <p class="text-sm text-slate-500">Optimisé</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `,
+    };
+
+    const SkillsSection = {
+      name: 'SkillsSection',
+      template: `
+        <section id="skills" class="fade-section bg-white/80 py-16 dark:bg-slate-900/60">
+          <div class="mx-auto max-w-6xl px-4">
+            <div class="mb-8 flex items-center justify-between">
+              <div>
+                <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">Compétences</p>
+                <h2 class="mt-2 text-3xl font-bold">Stack technique</h2>
+              </div>
+              <span class="rounded-full bg-slate-100 px-4 py-2 text-sm dark:bg-slate-800">Toujours en veille</span>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-900/40" v-for="skill in skills" :key="skill.title">
+                <div class="flex items-center justify-between">
+                  <p class="text-lg font-semibold">{{ skill.title }}</p>
+                  <span class="text-sm text-slate-500">{{ skill.level }}</span>
+                </div>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">{{ skill.description }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `,
+      setup() {
+        const skills = [
+          { title: 'Vue.js & Nuxt', level: 'Expert', description: 'Composants réactifs, routing, state management et bonnes pratiques DX.' },
+          { title: 'Tailwind CSS', level: 'Expert', description: 'Design system, atomic design et prototypage rapide responsive.' },
+          { title: 'Accessibilité', level: 'Avancé', description: 'Structure sémantique, ARIA, contrastes et navigation clavier.' },
+          { title: 'API & Front', level: 'Avancé', description: 'Intégration REST/GraphQL, sécurisation et gestion des erreurs UI.' },
+          { title: 'Performance', level: 'Avancé', description: 'Audits Lighthouse, lazy loading, bundling et métriques Core Web Vitals.' },
+          { title: 'Outils dev', level: 'Git / CI', description: 'Git, GitHub Actions, tests E2E, qualité de code et documentation.' },
+        ];
+        return { skills };
+      },
+    };
+
+    const ServicesSection = {
+      name: 'ServicesSection',
+      template: `
+        <section id="services" class="fade-section py-16">
+          <div class="mx-auto max-w-6xl px-4">
+            <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">Services</p>
+            <h2 class="mt-2 text-3xl font-bold">Accompagnement sur mesure</h2>
+            <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <article v-for="service in services" :key="service.title" class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">{{ service.icon }}</span>
+                  <div>
+                    <h3 class="text-lg font-semibold">{{ service.title }}</h3>
+                    <p class="text-sm text-slate-500">{{ service.tagline }}</p>
+                  </div>
+                </div>
+                <p class="mt-4 text-sm text-slate-600 dark:text-slate-300">{{ service.description }}</p>
+              </article>
+            </div>
+          </div>
+        </section>
+      `,
+      setup() {
+        const services = [
+          { title: 'Intégration web', tagline: 'Design pixel-perfect', description: 'Intégration fidèle de maquettes Figma, animations micro-interactions et responsive mobile-first.', icon: '🎨' },
+          { title: 'Applications web', tagline: 'SPA & PWA', description: 'Développement d’interfaces dynamiques avec Vue.js, routing, formulaires et gestion d’état.', icon: '⚡️' },
+          { title: 'Landing pages', tagline: 'Conversion first', description: 'Pages marketing optimisées SEO/SEA, mesure des conversions et performance maximale.', icon: '🚀' },
+          { title: 'Audit & optimisation', tagline: 'Accessibilité & vitesse', description: 'Analyse des performances, recommandations techniques et plan d’action priorisé.', icon: '🧭' },
+          { title: 'Design system', tagline: 'Cohérence UI', description: 'Création de bibliothèques de composants réutilisables et documentées pour vos équipes.', icon: '🧩' },
+          { title: 'Formation', tagline: 'Transmission', description: 'Ateliers sur Vue, Tailwind, Git et bonnes pratiques front-end pour vos équipes.', icon: '📚' },
+        ];
+        return { services };
+      },
+    };
+
+    const AboutSection = {
+      name: 'AboutSection',
+      template: `
+        <section id="about" class="fade-section bg-white/80 py-16 dark:bg-slate-900/60">
+          <div class="mx-auto max-w-6xl px-4 grid gap-8 lg:grid-cols-2">
+            <div>
+              <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">À propos</p>
+              <h2 class="mt-2 text-3xl font-bold">Une approche orientée produit</h2>
+              <p class="mt-4 text-slate-600 dark:text-slate-300">Ancien étudiant en informatique, je me spécialise dans la création d’expériences front-end accessibles et performantes. J’aime collaborer avec des équipes produit pour livrer vite, mesurer et itérer.</p>
+              <p class="mt-3 text-slate-600 dark:text-slate-300">Je recherche une alternance en développement front-end, ouverte aux missions freelance sur des projets qui font sens.</p>
+            </div>
+            <div class="grid gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-indigo-50 via-white to-orange-50 p-6 dark:border-slate-800 dark:from-slate-800 dark:via-slate-900 dark:to-slate-900">
+              <div class="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-slate-100 dark:bg-slate-900/70 dark:ring-slate-700">
+                <h3 class="font-semibold">Valeurs</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-300">Transparence, écoute active et documentation. Je privilégie une communication claire avec les équipes et les clients.</p>
+              </div>
+              <div class="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-slate-100 dark:bg-slate-900/70 dark:ring-slate-700">
+                <h3 class="font-semibold">Méthodo</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-300">Découpage en features, démonstrations régulières, tests automatisés et mesure des KPIs UX.</p>
+              </div>
+              <div class="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-slate-100 dark:bg-slate-900/70 dark:ring-slate-700">
+                <h3 class="font-semibold">Objectifs</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-300">Renforcer mon expertise Vue.js, contribuer à des produits à impact et encadrer techniquement des juniors.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `,
+    };
+
+    const ContactSection = {
+      name: 'ContactSection',
+      setup() {
+        const form = reactive({ name: '', email: '', message: '' });
+        const errors = reactive({});
+        const status = ref('idle');
+
+        const validate = () => {
+          errors.name = form.name ? '' : 'Le nom est requis';
+          errors.email = /.+@.+\..+/.test(form.email) ? '' : 'Email invalide';
+          errors.message = form.message.length >= 10 ? '' : 'Message trop court';
+          return !errors.name && !errors.email && !errors.message;
+        };
+
+        const submit = () => {
+          if (!validate()) return;
+          status.value = 'sending';
+          setTimeout(() => {
+            status.value = 'sent';
+          }, 600);
+        };
+
+        return { form, errors, status, submit };
+      },
+      template: `
+        <section id="contact" class="fade-section py-16">
+          <div class="mx-auto max-w-6xl px-4 grid gap-10 lg:grid-cols-2">
+            <div>
+              <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">Contact</p>
+              <h2 class="mt-2 text-3xl font-bold">Travaillons ensemble</h2>
+              <p class="mt-4 text-slate-600 dark:text-slate-300">Une idée de projet, un besoin d’audit ou simplement l’envie d’échanger ? Je réponds rapidement aux messages.</p>
+              <ul class="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <li><span class="font-semibold">Email :</span> contact@portfolio.dev</li>
+                <li><span class="font-semibold">LinkedIn :</span> linkedin.com/in/portfolio-dev</li>
+                <li><span class="font-semibold">CV :</span> <a href="#" class="text-indigo-500 underline">Télécharger le PDF</a></li>
+              </ul>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900/60">
+              <form @submit.prevent="submit" class="space-y-4">
+                <div>
+                  <label class="text-sm font-semibold">Votre nom</label>
+                  <input v-model="form.name" type="text" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder="Jane Doe" />
+                  <p v-if="errors.name" class="mt-1 text-sm text-red-500">{{ errors.name }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-semibold">Email</label>
+                  <input v-model="form.email" type="email" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder="vous@exemple.com" />
+                  <p v-if="errors.email" class="mt-1 text-sm text-red-500">{{ errors.email }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-semibold">Message</label>
+                  <textarea v-model="form.message" rows="4" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder="Parlez-moi de votre projet"></textarea>
+                  <p v-if="errors.message" class="mt-1 text-sm text-red-500">{{ errors.message }}</p>
+                </div>
+                <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white shadow-soft transition hover:translate-y-0.5 hover:shadow-none" :disabled="status==='sending'">
+                  <span v-if="status==='idle'">Envoyer</span>
+                  <span v-else-if="status==='sending'">Envoi...</span>
+                  <span v-else>Message envoyé ✔</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+      `,
+    };
+
+    const ProjectCard = {
+      name: 'ProjectCard',
+      props: ['project', 'compact'],
+      setup(props) {
+        const showDetails = ref(false);
+        const toggle = () => {
+          showDetails.value = !showDetails.value;
+        };
+        return { showDetails, toggle };
+      },
+      template: `
+        <article class="flex flex-col rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+            <img :src="project.image" :alt="project.title" class="h-48 w-full object-cover" />
+            <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-slate-900/80">{{ project.type }}</span>
+          </div>
+          <div class="mt-4 flex flex-1 flex-col">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="text-xl font-semibold">{{ project.title }}</h3>
+              <RouterLink :to="'/projects/' + project.id" class="text-sm text-indigo-500 underline">Détails</RouterLink>
+            </div>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ project.description }}</p>
+            <div v-if="!compact" class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+              <button class="text-indigo-600 underline" @click="toggle">En savoir plus</button>
+              <p v-if="showDetails" class="rounded-lg bg-slate-50 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-200">{{ project.details }}</p>
+            </div>
+            <div class="mt-auto flex flex-wrap gap-2 pt-4 text-xs text-slate-500">
+              <span v-for="tag in project.tech" :key="tag" class="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">{{ tag }}</span>
+            </div>
+          </div>
+        </article>
+      `,
+    };
+
+    const AddProjectForm = {
+      name: 'AddProjectForm',
+      emits: ['add'],
+      setup(_, { emit }) {
+        const form = reactive({ title: '', description: '', details: '', type: '', image: 'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80', tech: '' });
+        const errors = reactive({});
+
+        const submit = () => {
+          errors.title = form.title ? '' : 'Titre requis';
+          errors.description = form.description ? '' : 'Description requise';
+          errors.type = form.type ? '' : 'Type requis';
+          if (errors.title || errors.description || errors.type) return;
+          emit('add', { ...form, tech: form.tech.split(',').map((t) => t.trim()).filter(Boolean) });
+          form.title = form.description = form.details = form.type = form.tech = '';
+        };
+
+        return { form, errors, submit };
+      },
+      template: `
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-6 dark:border-slate-700 dark:bg-slate-900/40">
+          <h3 class="text-lg font-semibold">Ajouter un projet</h3>
+          <p class="text-sm text-slate-500">Met à jour la liste en temps réel.</p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="text-sm font-medium">Titre</label>
+              <input v-model="form.title" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
+              <p v-if="errors.title" class="text-sm text-red-500">{{ errors.title }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium">Type</label>
+              <input v-model="form.type" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Application web" />
+              <p v-if="errors.type" class="text-sm text-red-500">{{ errors.type }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium">Technos (séparées par des virgules)</label>
+              <input v-model="form.tech" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Vue, Tailwind" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-sm font-medium">Description courte</label>
+              <textarea v-model="form.description" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"></textarea>
+              <p v-if="errors.description" class="text-sm text-red-500">{{ errors.description }}</p>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-sm font-medium">Détails</label>
+              <textarea v-model="form.details" rows="3" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-sm font-medium">Image (URL)</label>
+              <input v-model="form.image" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
+            </div>
+          </div>
+          <button @click="submit" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white shadow-soft">Ajouter</button>
+        </div>
+      `,
+    };
+
+    const ProjectsPage = {
+      name: 'ProjectsPage',
+      components: { ProjectCard, AddProjectForm },
+      setup() {
+        const route = useRoute();
+        const router = useRouter();
+        const { projectStore } = route.meta;
+        const search = ref('');
+        const typeFilter = ref('all');
+
+        const types = computed(() => ['all', ...new Set(projectStore.state.projects.map((p) => p.type))]);
+
+        const filtered = computed(() => {
+          const term = search.value.toLowerCase();
+          return projectStore.state.projects.filter((p) => {
+            const matchesTerm = !term || [p.title, p.description, p.type].some((field) => field.toLowerCase().includes(term));
+            const matchesType = typeFilter.value === 'all' || p.type === typeFilter.value;
+            return matchesTerm && matchesType;
+          });
+        });
+
+        onMounted(() => {
+          if (!projectStore.state.projects.length) projectStore.loadProjects();
+        });
+
+        const handleAdd = (project) => projectStore.addProject(project);
+
+        return { projectStore, search, typeFilter, filtered, types, router };
+      },
+      template: `
+        <main class="mx-auto max-w-6xl px-4 py-12">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">Projets</p>
+              <h1 class="mt-2 text-3xl font-bold">Mes réalisations</h1>
+            </div>
+            <RouterLink to="/" class="text-sm text-indigo-500 underline">Retour à l'accueil</RouterLink>
+          </div>
+
+          <div class="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:grid-cols-[2fr_1fr]">
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class="flex flex-col text-sm font-medium">Recherche
+                <input v-model="search" class="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Mot-clé" />
+              </label>
+              <label class="flex flex-col text-sm font-medium">Type
+                <select v-model="typeFilter" class="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                  <option v-for="type in types" :value="type" :key="type">{{ type === 'all' ? 'Tous' : type }}</option>
+                </select>
+              </label>
+            </div>
+            <AddProjectForm @add="handleAdd" />
+          </div>
+
+          <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ProjectCard v-for="project in filtered" :key="project.id" :project="project" :compact="true" />
+          </div>
+
+          <p v-if="projectStore.loading" class="mt-6 text-sm text-slate-500">Chargement...</p>
+          <p v-if="projectStore.error" class="mt-6 text-sm text-red-500">{{ projectStore.error }}</p>
+        </main>
+      `,
+    };
+
+    const ProjectDetails = {
+      name: 'ProjectDetails',
+      setup() {
+        const route = useRoute();
+        const router = useRouter();
+        const { projectStore } = route.meta;
+        const project = computed(() => projectStore.state.projects.find((p) => p.id === Number(route.params.id)));
+
+        onMounted(() => {
+          if (!projectStore.state.projects.length) projectStore.loadProjects();
+        });
+
+        return { project, router };
+      },
+      template: `
+        <main class="mx-auto max-w-5xl px-4 py-12" v-if="project">
+          <RouterLink to="/projects" class="text-sm text-indigo-500 underline">← Retour aux projets</RouterLink>
+          <div class="mt-6 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <h1 class="text-3xl font-bold">{{ project.title }}</h1>
+              <p class="mt-2 text-slate-500">{{ project.type }}</p>
+              <img :src="project.image" :alt="project.title" class="mt-6 rounded-2xl shadow-soft" />
+              <p class="mt-6 text-lg text-slate-700 dark:text-slate-200">{{ project.details }}</p>
+            </div>
+            <div class="space-y-4 rounded-2xl border border-slate-200 bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/60">
+              <h2 class="text-xl font-semibold">Résumé</h2>
+              <p class="text-slate-600 dark:text-slate-300">{{ project.description }}</p>
+              <div>
+                <h3 class="font-semibold">Tech utilisées</h3>
+                <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                  <span v-for="tag in project.tech" :key="tag" class="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">{{ tag }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        <main v-else class="mx-auto max-w-5xl px-4 py-12">
+          <p class="text-slate-500">Projet introuvable.</p>
+          <RouterLink to="/projects" class="text-indigo-500 underline">Retour aux projets</RouterLink>
+        </main>
+      `,
+    };
+
+    const ProjectsHighlight = {
+      name: 'ProjectsHighlight',
+      components: { ProjectCard },
+      setup() {
+        const route = useRoute();
+        const { projectStore } = route.meta;
+        onMounted(() => {
+          if (!projectStore.state.projects.length) projectStore.loadProjects();
+        });
+        const topProjects = computed(() => projectStore.state.projects.slice(0, 3));
+        return { topProjects };
+      },
+      template: `
+        <section id="projects" class="fade-section py-16">
+          <div class="mx-auto max-w-6xl px-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm uppercase tracking-[0.25em] text-indigo-500">Réalisations</p>
+                <h2 class="mt-2 text-3xl font-bold">Sélection de projets</h2>
+              </div>
+              <RouterLink to="/projects" class="text-sm text-indigo-500 underline">Tout voir</RouterLink>
+            </div>
+            <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <ProjectCard v-for="project in topProjects" :key="project.id" :project="project" />
+            </div>
+          </div>
+        </section>
+      `,
+    };
+
+    const HomePage = {
+      name: 'HomePage',
+      components: { HeroSection, SkillsSection, ServicesSection, AboutSection, ProjectsHighlight, ContactSection },
+      template: `
+        <main>
+          <HeroSection />
+          <ProjectsHighlight />
+          <SkillsSection />
+          <ServicesSection />
+          <AboutSection />
+          <ContactSection />
+        </main>
+      `,
+    };
+
+    const FooterBase = {
+      name: 'FooterBase',
+      template: `
+        <footer class="border-t border-slate-200 bg-white/60 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/60">
+          <p>Portfolio anonymisé — Vue.js & Tailwind CSS. Disponible pour alternance et missions freelance.</p>
+        </footer>
+      `,
+    };
+
+    const routerFactory = (projectStore) => createRouter({
+      history: createWebHashHistory(),
+      routes: [
+        { path: '/', component: HomePage, meta: { projectStore } },
+        { path: '/projects', component: ProjectsPage, meta: { projectStore } },
+        { path: '/projects/:id', component: ProjectDetails, meta: { projectStore } },
+      ],
+    });
+
+    const AppShell = {
+      name: 'AppShell',
+      components: { HeaderNav, RouterView, FooterBase },
+      setup() {
+        const projectStore = createProjectStore();
+        const { theme, setTheme } = useTheme();
+        const router = useRouter();
+
+        const scrollToSection = (id) => {
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        onMounted(() => {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) entry.target.classList.add('is-visible');
+            });
+          }, { threshold: 0.2 });
+          document.querySelectorAll('.fade-section').forEach((section) => observer.observe(section));
+        });
+
+        watch(router.currentRoute, () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        return { scrollToSection, projectStore, theme, setTheme };
+      },
+      template: `
+        <div class="flex min-h-screen flex-col">
+          <HeaderNav :on-navigate="scrollToSection" :theme="theme" :set-theme="setTheme" />
+          <div class="flex-1">
+            <RouterView />
+          </div>
+          <FooterBase />
+        </div>
+      `,
+    };
+
+    const projectStore = createProjectStore();
+    const router = routerFactory(projectStore);
+
+    const app = createApp(AppShell);
+    app.use(router);
+    app.component('RouterLink', RouterLink);
+    app.component('RouterView', RouterView);
+    app.mount('#app');
+  </script>
+</body>
+</html>
