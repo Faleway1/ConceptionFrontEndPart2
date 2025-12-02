@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light dark;
-}
-
 body {
-  @apply bg-slate-900 text-slate-100 antialiased;
+  @apply bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-900 dark:text-slate-100;
 }

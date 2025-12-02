@@ -4,11 +4,11 @@
       v-model="filters.query"
       type="search"
       placeholder="Rechercher un projet"
-      class="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white focus:border-cyan-400 focus:outline-none md:max-w-md"
+      class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 shadow-sm focus:border-cyan-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white md:max-w-md"
     />
     <select
       v-model="filters.type"
-      class="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-white focus:border-cyan-400 focus:outline-none md:w-60"
+      class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 shadow-sm focus:border-cyan-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white md:w-60"
     >
       <option value="all">Tous les types</option>
       <option v-for="type in projectTypes" :key="type" :value="type">{{ type }}</option>
